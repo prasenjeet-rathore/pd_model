@@ -1,6 +1,9 @@
 # Data
 /data/*
 !/data/03_final/
+!data/01_raw/.gitkeep
+!data/02_processed/.gitkeep
+
 
 # Models: ignore all joblibs except the two used in production (LR + calibrator)
 models/*.joblib
