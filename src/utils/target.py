@@ -29,7 +29,7 @@ def build_modelling_universe(df, snapshot_date, horizon_days=365):
     df_model = df[df['LoanDate'] <= cutoff_date].copy()
     print(f"Modelling universe: {len(df_model):,} loans")
     print(f"  LoanDate range: {df_model['LoanDate'].min().date()} → {df_model['LoanDate'].max().date()}")
-    print(f"  Cutoff date: {cutoff_date.date()} (snapshot {snapshot_date.date()} − {horizon_days}d)")
+    print(f"  Cutoff date: {cutoff_date.date()} (snapshot {snapshot_date.date()} - {horizon_days}d)")
     return df_model, cutoff_date
 
 
