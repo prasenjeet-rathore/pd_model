@@ -10,10 +10,10 @@ depending on how you prefer to execute modules.
 
 from pprint import pprint
 
-from src.modeling.modeling import top_lr_feature_contributions
+from src.modeling.inference import top_lr_feature_contributions
 import pandas as pd
 
-from src.modeling.modeling import pipeline
+from src.modeling.inference import pipeline
 import pandas as pd
 from src.utils.config import PATHS
 

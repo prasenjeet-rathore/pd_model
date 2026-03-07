@@ -1,7 +1,7 @@
 """
 Deployable production pipeline wiring
 
-    from src.modeling.modeling import pipeline
+    from src.modeling.inference import pipeline
     probs = pipeline.predict_proba(df)
 """
 
@@ -84,7 +84,6 @@ def top_lr_feature_contributions(
         "woe_value": ...,
         "coefficient": ...,
         "contribution": ...,
-        "direction": "risk_up" | "risk_down",
       },
       ...
     ]
@@ -122,6 +121,4 @@ def top_lr_feature_contributions(
 #  used by both FastAPI app and local scripts
 print("Loading production PD model artifacts...")
 pipeline = _load_production_pipeline()
-print(f"✅ Model loaded successfully: {pipeline.version}")
-
-
+print(f"Model loaded successfully: {pipeline.version}")

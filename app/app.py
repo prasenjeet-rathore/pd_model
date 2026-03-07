@@ -1,5 +1,5 @@
 """
-Deployable FastAPI app using the global `pipeline` from modeling.py.
+Deployable FastAPI app using the global `pipeline` from inference.py.
 
 run with:
     uv run uvicorn app.app:app --reload
@@ -8,8 +8,8 @@ run with:
 from fastapi import FastAPI
 import pandas as pd
 
-from src.modeling.modeling import pipeline
-from src.modeling.modeling import top_lr_feature_contributions
+from src.modeling.inference import pipeline
+from src.modeling.inference import top_lr_feature_contributions
 
 app = FastAPI(title="PD Model API", version=pipeline.version)
 
