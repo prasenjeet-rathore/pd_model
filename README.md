@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=flat&logo=scikit-learn&logoColor=white" />
   <img src="https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=flat&logo=Matplotlib&logoColor=black" />
   <img src="https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi" />
+  <img src="https://img.shields.io/badge/mlflow-%230194E2.svg?style=flat&logo=mlflow&logoColor=white" />
   <img src="https://img.shields.io/badge/jupyter-%23FA0F00.svg?style=flat&logo=jupyter&logoColor=white" />
   <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white" />
 </p>
@@ -17,66 +18,76 @@ By Prasenjeet Rathore
 ## Project Organization
 
 ```
-├── LICENSE            <- Open-source license MIT
-├── README.md          <- The top-level README for using this project.
+├── LICENSE                 <- Open-source license MIT
+├── README.md               <- The top-level README for using this project.
+├── design-pattern.md       <- Design pattern analysis and refactoring rationale.
 ├── app
-│   └── app.py         <- Fast-Api App to use saved model as an endpoint.
+│   └── app.py              <- FastAPI app exposing the production model as an endpoint.
 ├── data
-│   ├── 01_raw            <- The original, immutable data dump.
-│   ├── 02_processed      <- Intermediate data that has been transformed.
-│   └── 03_final          <- The final data sets for modeling.
+│   ├── 01_raw              <- The original, immutable data dump.
+│   ├── 02_processed        <- Intermediate data that has been transformed.
+│   └── 03_final            <- The final data sets for modeling.
 │
-├── docs               <- A default docs folder
+├── docs                    <- A default docs folder
 │
-├── models             <- Trained and serialized models, model predictions, or model summaries
+├── models
+│   └── production/         <- Serialized production artifacts read by inference.py
 │
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                      
+├── notebooks               <- Jupyter notebooks. Naming convention is a number (for ordering).
 │
-├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         src and configuration for tools like black
+├── pyproject.toml          <- Project configuration and pinned dependencies (managed with uv).
 │
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+├── references              <- Data dictionaries, manuals, and all other explanatory materials.
 │
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures from notebooks
+├── reports
+│   └── figures             <- Generated graphics and figures from notebooks.
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `uv pip freeze > requirements.txt`
+├── requirements.txt        <- Dev environment requirements (uv pip freeze > requirements.txt).
 │
-└── src   <- Source code for use in this project.
+└── src
+    ├── __init__.py
     │
-    ├── __init__.py             <- Makes src a Python module
+    ├── modeling
+    │   ├── __init__.py
+    │   ├── train.py            <- Orchestrator: loads data, calls trainers (LR / XGBoost).
+    │   ├── inference.py        <- ProductionPipeline + PipelineFactory; loaded by app.py.
+    │   ├── test_prediction.py  <- Local one-row prediction tester using the OOT sample.
+    │   └── trainers/
+    │       ├── __init__.py
+    │       ├── base.py         <- BaseModelTrainer ABC + TrainingData dataclass.
+    │       ├── lr.py           <- LRTrainer (Template Method, WoE features).
+    │       └── xgb.py          <- XGBTrainer + TuningStrategy (Strategy pattern).
     │
-    ├── modeling                
-    │   ├── __init__.py         <- Makes modeling a Python module
-    │   ├── modeling.py         <- Code to run model pipeline        
-    │   └── test_prediction.py  <- Code to run prediction using one row from out of time sample
-    │
-    ├── utils 
-    │   ├── __init__.py         <- Makes util a Python module
-    │   │── config.py           <- Store useful variables and configuration
-    │   │── data_cleaning.py    <- util functions for data processing
-    │   │── evaluation.py       <- util functions for evaluating models
-    │   │── features.py         <- util functions to create features for modeling
-    │   │── target.py           <- util functions to create target variable for                    
-    │   └── woe.py              <- util function for woe and binning
-    │
-    └── 
+    └── utils
+        ├── __init__.py
+        ├── config.py           <- Central config: paths, random state, categorical columns.
+        ├── data_cleaning.py    <- Util functions for data processing.
+        ├── evaluation.py       <- Util functions for evaluating models.
+        ├── features.py         <- Util functions to create features for modeling.
+        ├── target.py           <- Util functions to create target variable.
+        └── woe.py              <- Util functions for WoE transformation and binning.
 ```
 
 
-## 1. How to to test the model prediction?
+## 1. How to test the model prediction?
 
 This repository includes a two-stage `Dockerfile` at the project root. It uses:
 
-- **Builder stage** – installs dependencies 
+- **Builder stage** – installs dependencies
 - **Runtime stage** – copies the virtual environment and project code into a slim Python image.
 
-### Build the image 
-*(use either docker or podman, I used podman for my fedora workstation)*
+The serving model is controlled by the `PD_MODEL_TYPE` environment variable (default: `lr`).
 
-*Build may takes 2-3 minutes or maybe more becuase it is 2 stage build to avoid attack surface for app and size* 
+| Value | Model |
+|---|---|
+| `lr` | Logistic Regression + Platt calibration (default) |
+| `xgb` | XGBoost baseline + Platt calibration |
+| `xgb_tuned` | Optuna-tuned XGBoost + Platt calibration |
+
+### Build the image
+*(use either docker or podman, I used podman for my Fedora workstation)*
+
+*Build may take 2-3 minutes because it is a 2-stage build to reduce attack surface and image size.*
 
 ### 1.1 From the project root run:
 
@@ -84,47 +95,84 @@ This repository includes a two-stage `Dockerfile` at the project root. It uses:
 docker build -t model-pd .
 ```
 
-### 1.2 Run the container in detached mode
+### 1.2 Run the API server in detached mode
+
+Default model (Logistic Regression):
 
 ```bash
-docker run -d -p 8000:8000 model-pd
+docker run -d -p 8000:8000 --name pd-service model-pd
 ```
 
-### 1.3 Check if container is created and running, try -a if container is not showing
+To serve XGBoost instead, pass the env var:
+
+```bash
+docker run -d -e PD_MODEL_TYPE=xgb -p 8000:8000 --name pd-service model-pd
+```
+
+### 1.3 Check if container is created and running
 
 ```bash
 docker ps
 ```
 
-### 1.4 To see a one-off prediction from model run the following
-The data for testing is one row picked from out of out-of-time sample 
-<br> currently chosen model for testing is logistic regression
+### 1.4 Run a one-off prediction from the OOT sample
 
+Default model (Logistic Regression) — top features show per-prediction WoE contributions:
 
 ```bash
 docker run --rm model-pd python -m src.modeling.test_prediction
 ```
 
-#### 1.5 How to stop container
+XGBoost — top features show per-prediction SHAP values:
 
-first check the contatiner id by running this
 ```bash
-docker ps
+docker run --rm -e PD_MODEL_TYPE=xgb model-pd python -m src.modeling.test_prediction
 ```
 
-then
+### 1.5 How to stop the container
+
 ```bash
-docker stop *insert container-id*
+docker ps                        # find the container id
+docker stop <container-id>       # first few characters + Tab autocompletes
 ```
 
- *small tip, you need to write full container id or copy paste it just write few first characters then hit tab , it will autocomplete*
+---
 
-## How to run notebooks ?
+## 2. MLflow experiment tracking
 
-For using the notebook considering install packages with requirements.txt as requirements-prod.txt is solely for production container to keep container size small. Make sure to install it in a .venv folder setup at the root of the folder. 
+Training runs are tracked with MLflow. After running `train.py`, launch the UI from the project root:
 
-also for setting up dev environment make sure to setup the python interpreter path in your choice of ide, sometimes jupyter notebooks otherwise don't detect the .venv created. (in Vscode the method is Ctrl+Shift+P then select Python Interpreter)
+```bash
+uv run mlflow ui
+```
 
-I recommend setting up environment using uv
+Then open `http://127.0.0.1:5000` in your browser.
+
+- **Experiments** tab — all training runs with metrics (train/val/OOT AUC, CV scores).
+- **Models** tab — registered model versions for `PD_LR_Baseline`, `PD_XGB_Baseline`, and `PD_XGB_Tuned`.
+
+### Retrain models
+
+```bash
+uv run python -m src.modeling.train               # train LR + XGBoost baseline
+uv run python -m src.modeling.train --model lr    # LR only
+uv run python -m src.modeling.train --model xgb   # XGBoost baseline only
+uv run python -m src.modeling.train --tune        # also run Optuna HPO for XGBoost
+uv run python -m src.modeling.train --tune --n-trials 150
+```
+
+---
+
+## 3. How to run notebooks?
+
+Install dev dependencies with `requirements.txt` (not `requirements-prod.txt`, which is for the production container only). Make sure to install into a `.venv` folder at the project root.
+
+Set the Python interpreter path in your IDE to point to `.venv` so Jupyter notebooks pick it up. In VSCode: `Ctrl+Shift+P` → *Python: Select Interpreter*.
+
+I recommend managing the environment with uv:
+
+```bash
+uv sync
+```
 
 --------
