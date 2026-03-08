@@ -20,7 +20,6 @@ By Prasenjeet Rathore
 ```
 ├── LICENSE                 <- Open-source license MIT
 ├── README.md               <- The top-level README for using this project.
-├── design-pattern.md       <- Design pattern analysis and refactoring rationale.
 ├── app
 │   └── app.py              <- FastAPI app exposing the production model as an endpoint.
 ├── data
