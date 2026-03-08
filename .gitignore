@@ -4,10 +4,14 @@
 !/data/01_raw/gitkeep.txt
 !/data/02_processed/gitkeep.txt
 
-# Models: ignore all joblibs except the two used in production (LR + calibrator)
+# Models
+# Notebook-saved artifacts (models/): ignore all joblibs
 models/*.joblib
-!models/lr_model.joblib
-!models/lr_platt_calibrator.joblib
+# train.py production artifacts: always regenerated, never committed
+models/production/
+# MLflow: track metrics/params (mlruns/ committed) but not heavy model artifacts
+mlruns/**/artifacts/
+mlartifacts/
 
 # Mac OS-specific storage files
 .DS_Store

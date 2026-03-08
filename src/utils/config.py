@@ -21,13 +21,14 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 PATHS = {
-    'raw_data':       PROJECT_ROOT / 'data' / '01_raw' / 'LoanData.csv',
-    'data_dictionary': PROJECT_ROOT / 'references' / 'data_dictionary.csv',
-    'cleaned':        PROJECT_ROOT / 'data' / '02_processed' / '01_estonia_cleaned.parquet',
-    'target_built':   PROJECT_ROOT / 'data' / '02_processed' / '02_estonia_target_creation.parquet',
-    'final_dir':      PROJECT_ROOT / 'data' / '03_final',
-    'models_dir':     PROJECT_ROOT / 'models',
-    'reports_dir':    PROJECT_ROOT / 'reports',
+    'raw_data':           PROJECT_ROOT / 'data' / '01_raw' / 'LoanData.csv',
+    'data_dictionary':    PROJECT_ROOT / 'references' / 'data_dictionary.csv',
+    'cleaned':            PROJECT_ROOT / 'data' / '02_processed' / '01_estonia_cleaned.parquet',
+    'target_built':       PROJECT_ROOT / 'data' / '02_processed' / '02_estonia_target_creation.parquet',
+    'final_dir':          PROJECT_ROOT / 'data' / '03_final',
+    'models_dir':         PROJECT_ROOT / 'models',           # notebooks only
+    'production_models_dir': PROJECT_ROOT / 'models' / 'production',  # train.py → inference.py
+    'reports_dir':        PROJECT_ROOT / 'reports',
 }
 
 

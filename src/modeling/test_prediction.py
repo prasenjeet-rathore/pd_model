@@ -10,11 +10,9 @@ depending on how you prefer to execute modules.
 
 from pprint import pprint
 
-from src.modeling.inference import top_lr_feature_contributions
 import pandas as pd
 
-from src.modeling.inference import pipeline
-import pandas as pd
+from src.modeling.inference import pipeline, top_lr_feature_contributions, top_xgb_shap_contributions
 from src.utils.config import PATHS
 
 
@@ -30,12 +28,11 @@ def main() -> None:
     df = pd.DataFrame([example_loan])
     proba = float(pipeline.predict_proba(df)[0])
 
-    # Top 4 contributing features for that specific prediction
-    top_features = top_lr_feature_contributions(
-            pipeline=pipeline,
-            X_row=df,
-            n_top=4,
-                    )
+    # Top 4 features — LR uses per-prediction WoE contributions, XGBoost uses per-prediction SHAP values
+    if hasattr(pipeline.model, "coef_"):
+        top_features = top_lr_feature_contributions(pipeline=pipeline, X_row=df, n_top=4)
+    else:
+        top_features = top_xgb_shap_contributions(pipeline=pipeline, X_row=df, n_top=4)
 
     result = {
             "input": example_loan,
