@@ -27,8 +27,6 @@ By Prasenjeet Rathore
 │   ├── 02_processed        <- Intermediate data that has been transformed.
 │   └── 03_final            <- The final data sets for modeling.
 │
-├── docs                    <- A default docs folder
-│
 ├── models
 │   └── production/         <- Serialized production artifacts read by inference.py
 │
@@ -48,7 +46,7 @@ By Prasenjeet Rathore
     │
     ├── modeling
     │   ├── __init__.py
-    │   ├── train.py            <- Orchestrator: loads data, calls trainers (LR / XGBoost).
+    │   ├── train.py            <- Orchestrator: loads data, calls models for training (LR / XGBoost).
     │   ├── inference.py        <- ProductionPipeline + PipelineFactory; loaded by app.py.
     │   ├── test_prediction.py  <- Local one-row prediction tester using the OOT sample.
     │   └── trainers/
@@ -167,11 +165,5 @@ uv run python -m src.modeling.train --tune --n-trials 150
 Install dev dependencies with `requirements.txt` (not `requirements-prod.txt`, which is for the production container only). Make sure to install into a `.venv` folder at the project root.
 
 Set the Python interpreter path in your IDE to point to `.venv` so Jupyter notebooks pick it up. In VSCode: `Ctrl+Shift+P` → *Python: Select Interpreter*.
-
-I recommend managing the environment with uv:
-
-```bash
-uv sync
-```
 
 --------
